@@ -166,3 +166,27 @@ passport.deserializeUser(function (아이디, done) {
     done(null, {});
   });
 });
+
+// 검색하기
+app.get('/search', function (req, res) {
+  var terms = [
+    {
+      $search: {
+        index: 'titleSearch',
+        text: {
+          query: req.query.value,
+          path: 'todo', // 제목날짜 둘다 찾고 싶으면 ['제목', '날짜']
+        },
+      },
+    },
+    { $sort: { _id: 1 } },
+    { $limit: 10 },
+    { $project: { todo: 1, _id: 0, score: { $meta: 'searchScore' } } },
+  ];
+  db.collection('post')
+    .aggregate(terms)
+    .toArray(function (err, rst) {
+      console.log(rst);
+      res.render('search.ejs', { _posts: rst });
+    });
+});
