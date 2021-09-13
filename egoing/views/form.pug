@@ -1,0 +1,16 @@
+html
+  head
+    meta(charset='utf-8')
+    title #{_title}
+  body
+    h1 Hello Pug
+    ul
+      -for(let i=0; i<5; i++)
+        li coding
+    form(action='/form-receiver' method='post')
+      p
+        input(type='text' name='title')
+      p  
+        textarea(name='desc')
+      p 
+        input(type="submit")
