@@ -211,5 +211,28 @@ app.get('/search', function (req, res) {
       res.render('search.ejs', { _posts: rst });
     });
 });
+
+// router API
 app.use('/shop', require('./routes/shop.js'));
 app.use('/board/sub', require('./routes/board.js'));
+
+// 이미지 업로드
+let multer = require('multer');
+let storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, './public/img');
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.originalname);
+  },
+});
+let upload = multer({ storage: storage });
+app.get('/upload', function (req, res) {
+  res.render('upload.ejs');
+});
+app.post('/upload', upload.single('profile'), function (req, res) {
+  res.send('업로드 완료');
+});
+app.get('/image/:imgName', function (req, res) {
+  res.sendFile(__dirname + '/public/img/' + req.params.imgName);
+});
