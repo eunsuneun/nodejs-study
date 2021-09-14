@@ -23,45 +23,16 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 app.get('/write', (req, res) => {
-  res.sendFile(__dirname + '/write.html');
+  res.render('write');
 });
-app.post('/add', (req, res) => {
-  res.send('Success !');
-  db.collection('counter').findOne({ name: '게시물갯수' }, function (err, rst) {
-    let totalPosts = rst.total;
-    console.log(totalPosts);
-    db.collection('post').insertOne(
-      { _id: totalPosts + 1, todo: req.body.todo, date: req.body.date },
-      function (err, rst) {
-        console.log('저장완료');
-        db.collection('counter').updateOne(
-          { name: '게시물갯수' },
-          { $inc: { total: 1 } },
-          function (err, rst) {
-            if (err) return console.log(err);
-          }
-        );
-      }
-    );
-  });
-});
+
+// 리스트페이지 화면 출력
 app.get('/list', (req, res) => {
   db.collection('post')
     .find()
     .toArray(function (err, rst) {
       res.render('list.ejs', { _posts: rst });
     });
-});
-
-// 삭제하기
-app.delete('/delete', function (req, res) {
-  req.body._id = parseInt(req.body._id);
-  db.collection('post').deleteOne(req.body, function (err, rst) {
-    if (err) return console.log(err);
-    console.log('삭제 완료');
-    res.status(200).send({ message: '성공했습니다.' }); // 응답코드 200을 보내주세요~ 200은 성공했다는 뜻
-    // res.status(400).send({ message: '실패했습니다.' }); // 400은 요청 실패했다는 뜻
-  });
 });
 
 // 상세페이지
@@ -114,7 +85,7 @@ app.post(
     failureRedirect: '/fail',
   }),
   function (req, res) {
-    res.redirect('/');
+    res.redirect('/mypage');
   }
 );
 
@@ -163,7 +134,57 @@ passport.serializeUser(function (user, done) {
 });
 passport.deserializeUser(function (아이디, done) {
   db.collection('login').findOne({ id: 아이디 }, function (err, rst) {
-    done(null, {});
+    done(null, rst);
+  });
+});
+
+// 회원가입
+app.get('/join', function (req, res) {
+  res.render('join');
+});
+app.post('/join', function (req, res) {
+  db.collection('login').insertOne(
+    { id: req.body.id, pw: req.body.pw },
+    function (err, rst) {
+      res.redirect('/');
+    }
+  );
+});
+
+// 글 등록하기
+app.post('/add', (req, res) => {
+  res.redirect(req.get('referer'));
+  db.collection('counter').findOne({ name: '게시물갯수' }, function (err, rst) {
+    let totalPosts = rst.total;
+    let saveThings = {
+      _id: totalPosts + 1,
+      todo: req.body.todo,
+      date: req.body.date,
+      writer: req.user._id,
+    };
+    db.collection('post').insertOne(saveThings, function (err, rst) {
+      console.log('저장완료');
+      db.collection('counter').updateOne(
+        { name: '게시물갯수' },
+        { $inc: { total: 1 } },
+        function (err, rst) {
+          if (err) return console.log(err);
+        }
+      );
+    });
+  });
+});
+
+// 삭제하기
+app.delete('/delete', function (req, res) {
+  req.body._id = parseInt(req.body._id);
+  var selected = { _id: req.body._id, writer: req.user._id };
+  console.log(req.user._id);
+  db.collection('post').deleteOne(selected, function (err, rst) {
+    if (err) return console.log(err);
+    console.log('삭제 완료');
+    res.status(200).send({ message: '성공했습니다.' }); // 응답코드 200을 보내주세요~ 200은 성공했다는 뜻
+    // res.status(400).send({ message: '실패했습니다.' }); // 400은 요청 실패했다는 뜻
   });
 });
 
