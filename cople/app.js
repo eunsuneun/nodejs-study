@@ -211,3 +211,5 @@ app.get('/search', function (req, res) {
       res.render('search.ejs', { _posts: rst });
     });
 });
+app.use('/shop', require('./routes/shop.js'));
+app.use('/board/sub', require('./routes/board.js'));
